@@ -41,12 +41,15 @@ def gather_clips(script: dict, demo: dict, *, stem: str) -> list[Path]:
         clip: Path | None = None
         if q and api_key():
             clip = fetch_clip_for_query(q, stem=stem, index=i)
-        if clip is None:
+        if clip is None and q and api_key():
+            clip = fetch_clip_for_query(q, stem=stem, index=i + 7)
+        if clip is None and not api_key():
             clip = fetch_clip_fallback(demo["id"], i % 3, stem=stem)
-        if clip is None and q:
-            clip = fetch_clip_for_query(q, stem=stem, index=i + 10)
         if clip:
             paths.append(clip)
+            print(f"    ✓ 素材[{i}]: {clip.name}", file=sys.stderr)
+        elif q:
+            print(f"    ✗ 素材[{i}] 下载失败: {q}", file=sys.stderr)
 
     if len(paths) < max(2, len(segments)):
         print(f"  网搜素材不足({len(paths)})，改用本地 ffmpeg 主题占位…", file=sys.stderr)
