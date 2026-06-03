@@ -1,0 +1,38 @@
+[
+  {
+    "id": "landscape_heal",
+    "name": "风景治愈",
+    "hook_style": "治愈、慢节奏、让人想停下来呼吸",
+    "clip_queries": ["ocean sunset aerial", "mountain mist morning", "forest stream nature", "clouds timelapse sky"],
+    "hashtags": "#治愈 #风景 #放松 #深夜 #情绪价值"
+  },
+  {
+    "id": "cute_animals",
+    "name": "动物萌宠",
+    "hook_style": "可爱、反差、一秒心软",
+    "clip_queries": ["cute kitten playing", "puppy slow motion", "pandas eating bamboo", "otter swimming"],
+    "hashtags": "#萌宠 #动物 #可爱 #解压 #治愈"
+  },
+  {
+    "id": "curiosity_wonder",
+    "name": "猎奇奇观",
+    "hook_style": "猎奇、震撼、你不知道的世界",
+    "clip_queries": ["deep ocean bioluminescence", "aurora northern lights", "volcano eruption lava", "macro insect close up"],
+    "hashtags": "#猎奇 #奇观 #冷知识 #震撼 #世界之大"
+  },
+  {
+    "id": "anxiety_hot",
+    "name": "焦虑热点",
+    "hook_style": "贩卖焦虑、追热点、反问句开头、制造紧迫感",
+    "clip_queries": ["crowded city rush hour", "phone scrolling night", "storm clouds dark sky", "empty office late night"],
+    "hashtags": "#焦虑 #热点 #打工人 #内卷 #情绪",
+    "use_exa_hot": true
+  },
+  {
+    "id": "urban_lonely",
+    "name": "城市孤独",
+    "hook_style": "孤独感、雨夜、霓虹、共鸣文案",
+    "clip_queries": ["rain window city night", "neon street lonely", "subway night commuter", "city lights bokeh night"],
+    "hashtags": "#孤独 #城市 #雨夜 #深夜 #共鸣"
+  }
+]
