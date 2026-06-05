@@ -17,7 +17,8 @@ from tts_client import synthesize as tts_synthesize
 
 CANVAS_W = 1080
 CANVAS_H = 1920
-SUBTITLE_Y = int(os.environ.get("AIVIDEO_SUBTITLE_Y", "1580"))
+# 距底边留白，避开抖音底部 UI（评论/简介区）
+SUBTITLE_BOTTOM_MARGIN = int(os.environ.get("AIVIDEO_SUBTITLE_BOTTOM", "200"))
 FONT_PATH = os.environ.get("AIVIDEO_FONT", str(ROOT / "assets" / "HiraginoSansGB.ttc"))
 
 
@@ -42,7 +43,7 @@ def ffprobe_duration(path: Path) -> float:
 _SENTENCE_SPLIT = re.compile(r"(?<=[，。！？；,.!?])")
 
 
-def split_narration(text: str, max_chars: int = 14) -> list[str]:
+def split_narration(text: str, max_chars: int = 18) -> list[str]:
     text = (text or "").strip()
     if not text:
         return []
@@ -85,45 +86,60 @@ def _escape_path(p: str) -> str:
     return p.translate(_DRAWTEXT_ESCAPE)
 
 
-def _drawtext(textfile: Path, start: float, end: float, *, y: int = SUBTITLE_Y) -> str:
-    parts = [
-        f"fontfile={_escape_path(FONT_PATH)}",
-        f"textfile={_escape_path(str(textfile))}",
-        "fontcolor=white",
-        "fontsize=52",
-        "borderw=3",
-        "bordercolor=black",
-        "box=1",
-        "boxcolor=black@0.5",
-        "boxborderw=20",
-        "x=(w-text_w)/2",
-        f"y={y}-text_h/2",
-        f"enable='between(t,{start:.3f},{end:.3f})'",
-    ]
+def _drawtext(
+    textfile: Path,
+    start: float,
+    end: float,
+    *,
+    style: str = "caption",
+) -> str:
+    """caption=底部分句跟读；hook=冷开场居中大字（仅标题）。"""
+    if style == "hook":
+        parts = [
+            f"fontfile={_escape_path(FONT_PATH)}",
+            f"textfile={_escape_path(str(textfile))}",
+            "fontcolor=white",
+            "fontsize=58",
+            "borderw=5",
+            "bordercolor=black@0.85",
+            "shadowcolor=black@0.55",
+            "shadowx=3",
+            "shadowy=3",
+            "x=(w-text_w)/2",
+            "y=(h-text_h)/2-60",
+            "line_spacing=8",
+            f"enable='between(t,{start:.3f},{end:.3f})'",
+        ]
+    else:
+        parts = [
+            f"fontfile={_escape_path(FONT_PATH)}",
+            f"textfile={_escape_path(str(textfile))}",
+            "fontcolor=white",
+            "fontsize=46",
+            "borderw=4",
+            "bordercolor=black@0.9",
+            "shadowcolor=black@0.45",
+            "shadowx=2",
+            "shadowy=2",
+            "box=1",
+            "boxcolor=black@0.28",
+            "boxborderw=14",
+            "x=(w-text_w)/2",
+            f"y=h-{SUBTITLE_BOTTOM_MARGIN}-text_h",
+            "line_spacing=6",
+            f"enable='between(t,{start:.3f},{end:.3f})'",
+        ]
     return "drawtext=" + ":".join(parts)
 
 
-def _scale_crop_portrait(duration: float, fps: int = 30) -> str:
-    """任意横竖素材 → 9:16 铺满裁剪。"""
-    n = max(2, int(round(duration * fps)))
+def _video_fit_portrait(duration: float, fps: int = 30) -> str:
+    """竖屏裁切，保留视频原始动态（不用 zoompan，避免只取第一帧当静图）。"""
     return (
-        f"scale={CANVAS_W * 2}:{CANVAS_H * 2}:force_original_aspect_ratio=increase,"
+        f"scale={CANVAS_W}:{CANVAS_H}:force_original_aspect_ratio=increase,"
         f"crop={CANVAS_W}:{CANVAS_H},"
         f"fps={fps},"
         f"trim=duration={duration:.3f},"
         "setpts=PTS-STARTPTS"
-    )
-
-
-def _kenburns_on_video(duration: float, direction: int = 0, fps: int = 30) -> str:
-    n = max(2, int(round(duration * fps)))
-    if direction % 2 == 0:
-        zp = "z='min(pzoom+0.0006,1.06)':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)'"
-    else:
-        zp = "z='if(eq(on,0),1.06,max(1.0,pzoom-0.0006))':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)'"
-    return (
-        f"{_scale_crop_portrait(duration, fps=fps)},"
-        f"zoompan={zp}:d={n}:s={CANVAS_W}x{CANVAS_H}:fps={fps}"
     )
 
 
@@ -142,24 +158,43 @@ def compose_segment(
     spans = allocate_phrase_times(phrases, duration)
 
     work_dir.mkdir(parents=True, exist_ok=True)
-    vf_parts = [_kenburns_on_video(duration, kenburns_direction)]
+    vf_parts = [_video_fit_portrait(duration)]
+
+    # 素材比口播长时随机取一段，避免每段都从第一帧开始
+    src_dur = ffprobe_duration(video_path)
+    start_s = 0.0
+    if src_dur > duration + 0.8:
+        start_s = random.uniform(0.0, src_dur - duration - 0.3)
+
+    show_hook = (on_screen or "").strip()
+    hook_end = min(2.2, duration * 0.35) if show_hook else 0.0
+
+    if show_hook:
+        hook_file = work_dir / "hook.txt"
+        hook_file.write_text(on_screen.strip()[:14], encoding="utf-8")
+        vf_parts.append(_drawtext(hook_file, 0.0, hook_end, style="hook"))
 
     for i, (phrase, (start, end)) in enumerate(zip(phrases, spans)):
+        # 冷开场大字期间不叠底部字幕，避免上下两行打架
+        if show_hook and end <= hook_end + 0.05:
+            continue
+        seg_start = max(start, hook_end) if show_hook else start
+        if seg_start >= end - 0.05:
+            continue
         tf = work_dir / f"phrase_{i:02d}.txt"
         tf.write_text(phrase, encoding="utf-8")
-        vf_parts.append(_drawtext(tf, start, end))
-
-    if (on_screen or "").strip():
-        hook_file = work_dir / "on_screen.txt"
-        hook_file.write_text(on_screen.strip()[:12], encoding="utf-8")
-        vf_parts.append(_drawtext(hook_file, 0.0, min(2.5, duration), y=280))
+        vf_parts.append(_drawtext(tf, seg_start, end, style="caption"))
 
     filter_chain = ",".join(vf_parts)
     out_path.parent.mkdir(parents=True, exist_ok=True)
-    cmd = [
-        "ffmpeg", "-y",
-        "-stream_loop", "-1", "-i", str(video_path),
-        "-i", str(audio_path),
+    loop = src_dur < duration - 0.2
+    cmd = ["ffmpeg", "-y"]
+    if start_s > 0:
+        cmd += ["-ss", f"{start_s:.3f}"]
+    if loop:
+        cmd += ["-stream_loop", "-1"]
+    cmd += ["-i", str(video_path), "-i", str(audio_path)]
+    cmd += [
         "-vf", filter_chain,
         "-map", "0:v", "-map", "1:a",
         "-t", f"{duration:.3f}",
@@ -167,6 +202,7 @@ def compose_segment(
         "-c:a", "aac", "-b:a", "128k", "-shortest",
         str(out_path),
     ]
+    _ = kenburns_direction  # 保留参数兼容，视频段不再用静图推拉
     subprocess.run(cmd, check=True, capture_output=True)
     return out_path
 
@@ -250,13 +286,14 @@ def build_from_script(
             continue
         audio = work_dir / f"seg_{i:02d}.mp3"
         tts_synthesize(narr, out_path=audio)
-        clip_idx = min(i + (1 if cold else 0), len(clip_paths) - 1)
+        clip_idx = int(seg.get("clip_index", i))
+        clip_idx = max(0, min(clip_idx, len(clip_paths) - 1))
         seg_out = work_dir / f"seg_{i:02d}.mp4"
         compose_segment(
             video_path=clip_paths[clip_idx],
             audio_path=audio,
             narration=narr,
-            on_screen=(seg.get("on_screen") or "").strip(),
+            on_screen="",  # 正文段只用底部分句字幕，不再顶部叠字
             out_path=seg_out,
             work_dir=work_dir / f"phrases_{i:02d}",
             kenburns_direction=i % 4,

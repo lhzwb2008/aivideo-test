@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""爆量情绪短视频脚本生成：网搜素材关键词 + 口播分段。"""
+"""爆量情绪短视频脚本：先理解素材画面，再写口播。"""
 
 from __future__ import annotations
 
@@ -34,7 +34,6 @@ def _extract_json(text: str) -> dict:
 
 
 def fetch_hot_snippet() -> str:
-    """用 Exa 拉一条近期社会/情绪热点摘要，供焦虑类脚本参考。"""
     try:
         end = datetime.now(timezone.utc)
         start = end - timedelta(days=3)
@@ -60,51 +59,78 @@ def fetch_hot_snippet() -> str:
         return ""
 
 
-def generate_script(demo: dict[str, Any]) -> dict[str, Any]:
-    """为某一 demo 类型生成完整脚本 JSON。"""
+def generate_script_from_visuals(
+    demo: dict[str, Any],
+    clip_infos: list[dict[str, Any]],
+) -> dict[str, Any]:
+    """根据已下载素材的视觉描述生成口播（解说必须与画面对齐）。"""
+    if not clip_infos:
+        raise ValueError("clip_infos 为空")
+
     hot_ctx = ""
     if demo.get("use_exa_hot"):
         hot_ctx = fetch_hot_snippet()
 
-    clip_queries = demo.get("clip_queries") or []
-    system = """你是短视频爆款文案策划，专做情绪价值、刷流量向的竖屏短视频（非财经、非荐股）。
-输出必须是合法 JSON，不要 markdown 包裹外的说明。
-风格：口语化、有钩子、有节奏；焦虑类可用反问和紧迫感，治愈类要温柔留白。
-合规：不造谣具体事件、不人身攻击、不写虚假数据；热点只可泛化共鸣，不捏造新闻细节。"""
+    visual_lines = []
+    for c in clip_infos:
+        visual_lines.append(
+            f"片段{c['index']}: 搜索词={c.get('query','')}; 画面={c.get('visual','')}"
+        )
+    visuals_text = "\n".join(visual_lines)
 
-    user = f"""请为「{demo['name']}」类型生成一条 35–55 秒的竖屏短视频脚本。
+    system = """你是短视频爆款文案策划。你必须根据「已确定的素材画面描述」写口播，严禁描写画面里没有的内容。
+输出合法 JSON，无 markdown 外壳。
+风格：口语化、情绪价值、有钩子；焦虑类可反问，治愈类温柔。
+合规：不造谣、不人身攻击、不捏造数据。"""
+
+    user = f"""为「{demo['name']}」类型写 35–55 秒竖屏短视频脚本。
 
 类型特点：{demo.get('hook_style', '')}
-建议素材搜索词（每条 segment 用其中一个，可微调英文）：{json.dumps(clip_queries, ensure_ascii=False)}
-{f'近期热点参考（可泛化共鸣，勿捏造细节）：\\n{hot_ctx}' if hot_ctx else ''}
+{f'热点参考（仅泛化共鸣）：\\n{hot_ctx}' if hot_ctx else ''}
 
-JSON schema:
+【已下载素材，口播必须逐段对应】
+{visuals_text}
+
+规则（重要）：
+1. segments 数量必须等于 {len(clip_infos)}，且 segments[i] 的 narration 只描述「片段i」的画面
+2. cold_open 基于片段0的画面写 2 秒钩子，可悬念/反问，但不要写片段0没有的东西
+3. 不要写与画面无关的动物/场景/物体
+4. 每段 narration 15-35 字，口语化
+5. outro 一句引导点赞收藏
+
+JSON:
 {{
   "demo_id": "{demo['id']}",
-  "title": "发布标题（带情绪钩子，≤28字）",
-  "cold_open": "前2秒口播钩子（一句话）",
+  "title": "发布标题（≤28字）",
+  "cold_open": "基于片段0的钩子",
   "hashtags": "{demo.get('hashtags', '')}",
   "segments": [
-    {{
-      "narration": "该段口播（15-35字）",
-      "clip_query": "Pexels 英文搜索词（2-5词）",
-      "on_screen": "可选画面大字（≤12字，可空）"
-    }}
+    {{"index": 0, "narration": "描述片段0", "clip_index": 0}},
+    ...
   ],
-  "outro": "结尾一句引导点赞收藏（可选）"
+  "outro": "结尾引导"
 }}
-
-要求：
-- segments 数量 3–4 段，每段 narration 独立成句
-- clip_query 用英文、适合搜 stock 视频
-- 总口播字数约 120–180 字（含 cold_open 和 outro）
 """
 
-    raw = chat_complete(system=system, user=user, max_tokens=2048, temperature=0.85)
+    raw = chat_complete(system=system, user=user, max_tokens=2048, temperature=0.7)
     script = _extract_json(raw)
     script.setdefault("demo_id", demo["id"])
     script.setdefault("hashtags", demo.get("hashtags", ""))
+
     segs = script.get("segments") or []
-    if len(segs) < 2:
-        raise ValueError("segments 过少")
+    if len(segs) != len(clip_infos):
+        raise ValueError(f"segments 数量 {len(segs)} 与素材 {len(clip_infos)} 不一致")
+
+    for i, seg in enumerate(segs):
+        seg["clip_index"] = i
+        seg["clip_query"] = clip_infos[i].get("query", "")
+        seg["visual"] = clip_infos[i].get("visual", "")
+
+    script["clip_infos"] = clip_infos
     return script
+
+
+# 保留旧接口供调试
+def generate_script(demo: dict[str, Any]) -> dict[str, Any]:
+    """已弃用：请先下载素材并调用 generate_script_from_visuals。"""
+    raise RuntimeError("请使用「先下载素材→视觉理解→generate_script_from_visuals」流程")
