@@ -1,0 +1,96 @@
+{
+  "snapshots": {
+    "2026-06-05": {
+      "date": "2026-06-05",
+      "fetched_at": "2026-06-05T23:45:11.235937+00:00",
+      "top": [
+        {
+          "team": "Spain",
+          "team_cn": "西班牙",
+          "pct": 16.0
+        },
+        {
+          "team": "France",
+          "team_cn": "法国",
+          "pct": 16.0
+        },
+        {
+          "team": "England",
+          "team_cn": "英格兰",
+          "pct": 11.2
+        },
+        {
+          "team": "Portugal",
+          "team_cn": "葡萄牙",
+          "pct": 9.7
+        },
+        {
+          "team": "Argentina",
+          "team_cn": "阿根廷",
+          "pct": 8.8
+        },
+        {
+          "team": "Brazil",
+          "team_cn": "巴西",
+          "pct": 8.2
+        },
+        {
+          "team": "Germany",
+          "team_cn": "德国",
+          "pct": 5.3
+        },
+        {
+          "team": "Netherlands",
+          "team_cn": "荷兰",
+          "pct": 4.0
+        }
+      ]
+    },
+    "2026-06-06": {
+      "date": "2026-06-06",
+      "fetched_at": "2026-06-06T02:09:53.272068+00:00",
+      "top": [
+        {
+          "team": "Spain",
+          "team_cn": "西班牙",
+          "pct": 16.0
+        },
+        {
+          "team": "France",
+          "team_cn": "法国",
+          "pct": 16.0
+        },
+        {
+          "team": "England",
+          "team_cn": "英格兰",
+          "pct": 11.2
+        },
+        {
+          "team": "Portugal",
+          "team_cn": "葡萄牙",
+          "pct": 9.7
+        },
+        {
+          "team": "Argentina",
+          "team_cn": "阿根廷",
+          "pct": 8.8
+        },
+        {
+          "team": "Brazil",
+          "team_cn": "巴西",
+          "pct": 8.2
+        },
+        {
+          "team": "Germany",
+          "team_cn": "德国",
+          "pct": 5.3
+        },
+        {
+          "team": "Netherlands",
+          "team_cn": "荷兰",
+          "pct": 4.0
+        }
+      ]
+    }
+  }
+}

@@ -93,7 +93,7 @@ def _drawtext(
     *,
     style: str = "caption",
 ) -> str:
-    """caption=底部分句跟读；hook=冷开场居中大字（仅标题）。"""
+    """caption=底部分句跟读；hook=冷开场居中大字；news_*=新闻顶栏。"""
     if style == "hook":
         parts = [
             f"fontfile={_escape_path(FONT_PATH)}",
@@ -203,6 +203,186 @@ def compose_segment(
         str(out_path),
     ]
     _ = kenburns_direction  # 保留参数兼容，视频段不再用静图推拉
+    subprocess.run(cmd, check=True, capture_output=True)
+    return out_path
+
+
+def _wrap_headline_lines(text: str, *, max_line: int = 13, max_lines: int = 2) -> list[str]:
+    text = (text or "").strip() or "世界杯快讯"
+    if len(text) <= max_line:
+        return [text]
+    lines: list[str] = []
+    buf = ""
+    for ch in text:
+        buf += ch
+        if len(buf) >= max_line and ch in "，。！？、 ":
+            lines.append(buf.strip())
+            buf = ""
+            if len(lines) >= max_lines:
+                break
+    if buf and len(lines) < max_lines:
+        lines.append(buf.strip())
+    return lines[:max_lines] if lines else [text[: max_line * max_lines]]
+
+
+def _news_index_from_label(news_label: str, *, fallback: int = 1) -> int:
+    cn = ("一", "二", "三", "四", "五", "六", "七", "八")
+    for i, c in enumerate(cn, 1):
+        if c in (news_label or ""):
+            return i
+    m = re.search(r"\d+", news_label or "")
+    return int(m.group()) if m else fallback
+
+
+def _load_font(size: int):
+    from PIL import ImageFont
+    try:
+        return ImageFont.truetype(FONT_PATH, size)
+    except OSError:
+        return ImageFont.load_default()
+
+
+def render_news_header_png(
+    *,
+    news_label: str,
+    headline: str,
+    out_path: Path,
+    news_index: int | None = None,
+    brand: str = "世界杯前哨战",
+) -> Path:
+    """绘制新闻顶栏透明 PNG（PIL 精修，替代 drawtext）。"""
+    from PIL import Image, ImageDraw
+
+    idx = news_index or _news_index_from_label(news_label)
+    lines = _wrap_headline_lines(headline)
+
+    w, h = CANVAS_W, 320
+    img = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+    draw = ImageDraw.Draw(img)
+
+    card_x1, card_y1, card_x2, card_y2 = 28, 52, 1052, 286
+    # 卡片阴影
+    draw.rounded_rectangle(
+        (card_x1 + 4, card_y1 + 6, card_x2 + 4, card_y2 + 6),
+        radius=28, fill=(0, 0, 0, 90),
+    )
+    # 主卡片
+    draw.rounded_rectangle(
+        (card_x1, card_y1, card_x2, card_y2),
+        radius=28, fill=(10, 16, 38, 215), outline=(45, 95, 200, 160), width=2,
+    )
+    # 顶部色带
+    draw.rounded_rectangle((card_x1, card_y1, card_x2, card_y1 + 5), radius=28, fill=(0, 196, 160, 230))
+    draw.rectangle((card_x1, card_y1 + 3, card_x2, card_y1 + 5), fill=(255, 214, 10, 220))
+
+    # 左侧序号圆环
+    cx, cy, r = 98, 168, 46
+    draw.ellipse((cx - r - 2, cy - r - 2, cx + r + 2, cy + r + 2), fill=(255, 214, 10, 200))
+    draw.ellipse((cx - r, cy - r, cx + r, cy + r), fill=(0, 168, 140, 255))
+    draw.ellipse((cx - r + 6, cy - r + 6, cx + r - 6, cy + r - 6), fill=(0, 130, 110, 255))
+
+    f_num = _load_font(44)
+    num_text = f"{idx:02d}"
+    nb = draw.textbbox((0, 0), num_text, font=f_num)
+    nw, nh = nb[2] - nb[0], nb[3] - nb[1]
+    draw.text((cx - nw // 2, cy - nh // 2 - 4), num_text, font=f_num, fill=(255, 255, 255, 255))
+
+    tx = 168
+    f_brand = _load_font(24)
+    f_tag = _load_font(26)
+    f_head = _load_font(48)
+
+    draw.text((tx, 78), brand, font=f_brand, fill=(120, 150, 210, 230))
+    draw.text((tx + 200, 80), "|", font=f_brand, fill=(80, 100, 140, 180))
+    tag = (news_label or f"第{idx}条新闻").strip()
+    draw.rounded_rectangle((tx + 220, 72, tx + 220 + min(280, len(tag) * 28 + 36), 112), radius=14, fill=(25, 55, 110, 200))
+    draw.text((tx + 236, 76), tag, font=f_tag, fill=(255, 230, 140, 255))
+
+    hy = 128
+    for line in lines:
+        # 标题阴影
+        draw.text((tx + 2, hy + 2), line, font=f_head, fill=(0, 0, 0, 140))
+        draw.text((tx, hy), line, font=f_head, fill=(255, 255, 255, 255))
+        hy += 58
+
+    # 底部分隔线
+    draw.rectangle((tx, card_y2 - 22, card_x2 - 36, card_y2 - 20), fill=(60, 120, 220, 120))
+
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    img.save(out_path, "PNG")
+    return out_path
+
+
+def compose_news_segment(
+    *,
+    video_path: Path,
+    audio_path: Path,
+    narration: str,
+    news_label: str,
+    headline: str,
+    out_path: Path,
+    work_dir: Path,
+    news_index: int | None = None,
+) -> Path:
+    """新闻段：PIL 顶栏卡片 + 底部分句字幕。"""
+    duration = max(0.5, ffprobe_duration(audio_path))
+    phrases = split_narration(narration)
+    spans = allocate_phrase_times(phrases, duration)
+
+    work_dir.mkdir(parents=True, exist_ok=True)
+    header_png = work_dir / "news_header.png"
+    render_news_header_png(
+        news_label=news_label,
+        headline=headline,
+        out_path=header_png,
+        news_index=news_index,
+    )
+
+    caption_filters: list[str] = []
+    for i, (phrase, (start, end)) in enumerate(zip(phrases, spans)):
+        tf = work_dir / f"phrase_{i:02d}.txt"
+        tf.write_text(phrase, encoding="utf-8")
+        caption_filters.append(_drawtext(tf, start, end, style="caption"))
+
+    video_fit = _video_fit_portrait(duration)
+    caption_chain = ",".join(caption_filters) if caption_filters else "null"
+    overlay_y = 48
+
+    if caption_filters:
+        fc = (
+            f"[0:v]{video_fit}[base];"
+            f"[1:v]scale={CANVAS_W}:-1[hdr];"
+            f"[base][hdr]overlay=0:{overlay_y}:format=auto[ov];"
+            f"[ov]{caption_chain}[vout]"
+        )
+    else:
+        fc = (
+            f"[0:v]{video_fit}[base];"
+            f"[1:v]scale={CANVAS_W}:-1[hdr];"
+            f"[base][hdr]overlay=0:{overlay_y}:format=auto[vout]"
+        )
+
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    src_dur = ffprobe_duration(video_path)
+    start_s = 0.0
+    if src_dur > duration + 0.8:
+        start_s = random.uniform(0.0, src_dur - duration - 0.3)
+    loop = src_dur < duration - 0.2
+
+    cmd = ["ffmpeg", "-y"]
+    if start_s > 0:
+        cmd += ["-ss", f"{start_s:.3f}"]
+    if loop:
+        cmd += ["-stream_loop", "-1"]
+    cmd += ["-i", str(video_path), "-loop", "1", "-i", str(header_png), "-i", str(audio_path)]
+    cmd += [
+        "-filter_complex", fc,
+        "-map", "[vout]", "-map", "2:a",
+        "-t", f"{duration:.3f}",
+        "-c:v", "libx264", "-preset", "fast", "-crf", "23",
+        "-c:a", "aac", "-b:a", "128k", "-shortest",
+        str(out_path),
+    ]
     subprocess.run(cmd, check=True, capture_output=True)
     return out_path
 

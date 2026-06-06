@@ -1,0 +1,19 @@
+{
+  "id": "worldcup_sentinel",
+  "name": "世界杯前哨战",
+  "brand": "世界杯前哨战",
+  "hook_style": "资讯快报、数据说话、每天一条",
+  "clip_queries": [
+    "soccer stadium crowd night lights",
+    "football world cup goal celebration",
+    "soccer fans flags stadium cheering",
+    "football training world cup squad",
+    "soccer press conference interview"
+  ],
+  "hashtags": "#世界杯 #2026世界杯 #Polymarket #夺冠赔率 #足球",
+  "polymarket_slug": "world-cup-winner",
+  "polymarket_url": "https://polymarket.com/event/world-cup-winner",
+  "odds_top_n": 8,
+  "news_segments": 4,
+  "target_duration_sec": 60
+}
