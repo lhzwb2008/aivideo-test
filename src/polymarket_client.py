@@ -406,6 +406,46 @@ def render_odds_frame_sequence(
     return paths, anim_duration
 
 
+BUNDLE_PATH = ROOT / "assets" / "worldcup" / "odds_bundle.json"
+
+
+def load_odds_bundle() -> dict[str, Any]:
+    """离线赔率包（API 不可用时）。"""
+    if BUNDLE_PATH.is_file():
+        data = json.loads(BUNDLE_PATH.read_text(encoding="utf-8"))
+        rows = []
+        for r in data.get("top") or []:
+            item = dict(r)
+            item.setdefault("team_cn", TEAM_CN.get(item.get("team", ""), item.get("team", "")))
+            rows.append(item)
+        data["top"] = rows
+        data["card_png"] = str(ROOT / data.get("card_png", "assets/worldcup/snapshots/20260606_odds.png"))
+        return data
+
+    history = load_history()
+    dates = sorted(history.get("snapshots", {}).keys())
+    if not dates:
+        raise RuntimeError("无可用赔率数据（API 失败且无本地缓存）")
+    snap = history["snapshots"][dates[-1]]
+    return {
+        "date": snap["date"],
+        "event_title": "World Cup Winner",
+        "volume24hr": None,
+        "top": snap.get("top") or [],
+        "card_png": str(SNAPSHOT_DIR / f"{snap['date'].replace('-', '')}_odds.png"),
+        "source": "history",
+    }
+
+
+def fetch_odds_safe(*, today: str | None = None) -> dict[str, Any]:
+    """优先在线拉取，失败则用本地 bundle。"""
+    try:
+        return fetch_and_prepare(today=today)
+    except Exception as exc:
+        print(f"  提示: Polymarket API 不可用，使用本地缓存 ({exc})", file=__import__("sys").stderr)
+        return load_odds_bundle()
+
+
 def fetch_and_prepare(*, today: str | None = None) -> dict[str, Any]:
     today = today or _today_str()
     event = fetch_raw_event()

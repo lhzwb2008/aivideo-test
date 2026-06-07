@@ -100,7 +100,7 @@ def build_video(
                 subtitle=odds_data.get("date", ""),
                 volume24hr=odds_data.get("volume24hr"),
             )
-        elif seg.get("type") == "news":
+        elif seg.get("type") in ("news", "analysis"):
             clip_idx = int(seg.get("clip_index", i))
             clip_idx = max(0, min(clip_idx, len(clips) - 1))
             compose_news_segment(
