@@ -1,0 +1,47 @@
+[
+  {
+    "id": "brazil",
+    "name_cn": "巴西",
+    "name_en": "Brazil",
+    "nickname": "桑巴军团",
+    "colors": "黄绿蓝",
+    "star_hint": "维尼修斯领衔进攻",
+    "clip_mood": "samba carnival football celebration"
+  },
+  {
+    "id": "france",
+    "name_cn": "法国",
+    "name_en": "France",
+    "nickname": "高卢雄鸡",
+    "colors": "蓝白红",
+    "star_hint": "姆巴佩速度冲击",
+    "clip_mood": "france football fans stadium"
+  },
+  {
+    "id": "argentina",
+    "name_cn": "阿根廷",
+    "name_en": "Argentina",
+    "nickname": "潘帕斯雄鹰",
+    "colors": "蓝白条纹",
+    "star_hint": "梅西精神领袖",
+    "clip_mood": "argentina football fans blue white"
+  },
+  {
+    "id": "spain",
+    "name_cn": "西班牙",
+    "name_en": "Spain",
+    "nickname": "斗牛士",
+    "colors": "红黄",
+    "star_hint": "传控与青年才俊",
+    "clip_mood": "spain football tiki taka fans"
+  },
+  {
+    "id": "england",
+    "name_cn": "英格兰",
+    "name_en": "England",
+    "nickname": "三狮军团",
+    "colors": "白红",
+    "star_hint": "凯恩禁区支点",
+    "clip_mood": "england football three lions fans"
+  }
+]

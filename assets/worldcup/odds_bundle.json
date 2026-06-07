@@ -1,0 +1,29 @@
+{
+  "date": "2026-06-06",
+  "event_title": "World Cup Winner",
+  "volume24hr": 34676635,
+  "source": "cached_snapshot",
+  "top": [
+    {"team": "Spain", "team_cn": "西班牙", "pct": 16.0},
+    {"team": "France", "team_cn": "法国", "pct": 16.0},
+    {"team": "England", "team_cn": "英格兰", "pct": 11.2},
+    {"team": "Portugal", "team_cn": "葡萄牙", "pct": 9.7},
+    {"team": "Argentina", "team_cn": "阿根廷", "pct": 8.8},
+    {"team": "Brazil", "team_cn": "巴西", "pct": 8.2},
+    {"team": "Germany", "team_cn": "德国", "pct": 5.3},
+    {"team": "Netherlands", "team_cn": "荷兰", "pct": 4.0},
+    {"team": "Belgium", "team_cn": "比利时", "pct": 3.4},
+    {"team": "Croatia", "team_cn": "克罗地亚", "pct": 2.9},
+    {"team": "Colombia", "team_cn": "哥伦比亚", "pct": 2.5},
+    {"team": "Uruguay", "team_cn": "乌拉圭", "pct": 2.2},
+    {"team": "USA", "team_cn": "美国", "pct": 1.9},
+    {"team": "Mexico", "team_cn": "墨西哥", "pct": 1.6},
+    {"team": "Italy", "team_cn": "意大利", "pct": 1.4},
+    {"team": "Morocco", "team_cn": "摩洛哥", "pct": 1.2},
+    {"team": "Canada", "team_cn": "加拿大", "pct": 0.9},
+    {"team": "Japan", "team_cn": "日本", "pct": 0.8},
+    {"team": "Switzerland", "team_cn": "瑞士", "pct": 0.7},
+    {"team": "Costa Rica", "team_cn": "哥斯达黎加", "pct": 0.4}
+  ],
+  "card_png": "assets/worldcup/snapshots/20260606_odds.png"
+}

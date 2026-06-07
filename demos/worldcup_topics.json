@@ -1,0 +1,77 @@
+[
+  {
+    "id": "hot_favorites",
+    "name": "五大夺冠热门",
+    "title_hint": "西法并列榜首！五大热门谁最稳",
+    "angle": "Polymarket 夺冠赔率最高的热门队，解读被看好逻辑与隐患",
+    "teams": ["Spain", "France", "England", "Portugal"],
+    "segment_labels": ["热门No.1", "热门No.2", "热门No.3", "热门No.4"],
+    "clip_queries": [
+      "spain national football team celebration",
+      "france football team fans stadium",
+      "england football world cup fans",
+      "portugal football ronaldo celebration crowd"
+    ],
+    "hashtags": "#世界杯 #夺冠热门 #赔率分析 #西班牙 #法国"
+  },
+  {
+    "id": "dark_horses",
+    "name": "五大冷门黑马",
+    "title_hint": "市场低估的五支黑马球队",
+    "angle": "赔率不高但具备爆冷潜力，适合关注而非盲目追捧",
+    "teams": ["Netherlands", "Belgium", "Colombia", "Uruguay"],
+    "segment_labels": ["冷门No.1", "冷门No.2", "冷门No.3", "冷门No.4"],
+    "clip_queries": [
+      "netherlands football orange fans",
+      "belgium football team goal",
+      "colombia football fans yellow",
+      "uruguay football team celebration"
+    ],
+    "hashtags": "#世界杯 #冷门黑马 #赔率分析 #爆冷 #足球"
+  },
+  {
+    "id": "south_america",
+    "name": "南美四雄",
+    "title_hint": "南美四雄夺冠赔率怎么排",
+    "angle": "阿根廷巴西领衔，乌拉圭哥伦比亚赔率与实力差在哪",
+    "teams": ["Argentina", "Brazil", "Uruguay", "Colombia"],
+    "segment_labels": ["南美No.1", "南美No.2", "南美No.3", "南美No.4"],
+    "clip_queries": [
+      "argentina football messi fans world cup",
+      "brazil football samba fans stadium",
+      "uruguay football team fans",
+      "colombia football goal celebration"
+    ],
+    "hashtags": "#世界杯 #南美足球 #阿根廷 #巴西 #赔率"
+  },
+  {
+    "id": "hosts_americas",
+    "name": "东道主北美",
+    "title_hint": "美墨加东道主赔率真相",
+    "angle": "主场作战红利是否反映在夺冠概率里，三队各自机会与短板",
+    "teams": ["USA", "Mexico", "Canada", "Costa Rica"],
+    "segment_labels": ["东道No.1", "东道No.2", "东道No.3", "外卡观察"],
+    "clip_queries": [
+      "usa soccer fans stadium american",
+      "mexico football fans green stadium",
+      "canada soccer fans celebration",
+      "costa rica football fans"
+    ],
+    "hashtags": "#世界杯 #美加墨 #东道主 #美国队 #墨西哥"
+  },
+  {
+    "id": "europe_value",
+    "name": "欧洲遗珠",
+    "title_hint": "欧洲五队：低赔率里的价值",
+    "angle": "不在榜首但欧洲传统强队，赔率是否给出上车机会",
+    "teams": ["Germany", "Netherlands", "Belgium", "Croatia"],
+    "segment_labels": ["欧洲No.1", "欧洲No.2", "欧洲No.3", "欧洲No.4"],
+    "clip_queries": [
+      "germany football team fans stadium",
+      "netherlands football world cup",
+      "belgium red devils football fans",
+      "croatia football modric fans"
+    ],
+    "hashtags": "#世界杯 #欧洲足球 #德国 #克罗地亚 #赔率分析"
+  }
+]
